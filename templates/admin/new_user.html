@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% block title %}Add User — MicroFinance LMS{% endblock %}
+
+{% block breadcrumb %}
+<ol class="breadcrumb mb-0 small">
+  <li class="breadcrumb-item"><a href="{{ url_for('admin.users') }}">Users</a></li>
+  <li class="breadcrumb-item active">Add User</li>
+</ol>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h2 class="mb-1"><i class="bi bi-person-plus me-2 text-primary"></i>Add New User</h2>
+    <p class="text-muted mb-0 small">Create a login for an admin or field user</p>
+  </div>
+  <a href="{{ url_for('admin.users') }}" class="btn btn-outline-secondary">
+    <i class="bi bi-arrow-left me-1"></i>Back
+  </a>
+</div>
+
+<div class="row justify-content-center">
+  <div class="col-lg-6">
+    <div class="table-card p-4">
+      <form method="POST">
+        <!-- Name -->
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Full Name <span class="text-danger">*</span></label>
+          <input type="text" name="name" class="form-control"
+                 placeholder="e.g. Ravi Kumar"
+                 value="{{ form_data.get('name', '') }}" required />
+        </div>
+
+        <!-- Email -->
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Email Address <span class="text-danger">*</span></label>
+          <input type="email" name="email" class="form-control"
+                 placeholder="e.g. ravi@zeony.com"
+                 value="{{ form_data.get('email', '') }}" required />
+          <div class="form-text">This is the login email.</div>
+        </div>
+
+        <!-- Password -->
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Password <span class="text-danger">*</span></label>
+          <div class="input-group">
+            <input type="text" name="password" id="passwordField" class="form-control"
+                   placeholder="Set a login password"
+                   value="{{ form_data.get('password', '') }}" required />
+          </div>
+          <div class="form-text">User will use this password to login.</div>
+        </div>
+
+        <!-- Role -->
+        <div class="mb-4">
+          <label class="form-label fw-semibold">Role <span class="text-danger">*</span></label>
+          <select name="role" class="form-select" required>
+            <option value="field_user" {% if form_data.get('role','field_user') == 'field_user' %}selected{% endif %}>
+              Field User (can collect payments from assigned customers)
+            </option>
+            <option value="admin" {% if form_data.get('role') == 'admin' %}selected{% endif %}>
+              Admin (full access)
+            </option>
+          </select>
+        </div>
+
+        <div class="d-flex gap-2">
+          <button type="submit" class="btn btn-primary px-4">
+            <i class="bi bi-person-check me-1"></i>Create User
+          </button>
+          <a href="{{ url_for('admin.users') }}" class="btn btn-outline-secondary">Cancel</a>
+        </div>
+      </form>
+    </div>
+
+    <!-- Info box -->
+    <div class="alert alert-info mt-3 small">
+      <i class="bi bi-info-circle me-1"></i>
+      After creating a user, go to <strong>Customers</strong> → open a customer profile →
+      use the <strong>Assign to Field User</strong> section to assign customers to them.
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+{% block title %}New Customer — MicroFinance LMS{% endblock %}
+
+{% block breadcrumb %}
+<ol class="breadcrumb mb-0 small">
+  <li class="breadcrumb-item"><a href="{{ url_for('admin.customers') }}">Customers</a></li>
+  <li class="breadcrumb-item active">New Customer</li>
+</ol>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h2><i class="bi bi-person-plus me-2 text-primary"></i>New Customer</h2>
+</div>
+
+<form method="POST" enctype="multipart/form-data" novalidate>
+  <div class="row g-4">
+
+    <!-- Personal Info -->
+    <div class="col-xl-6">
+      <div class="form-card">
+        <div class="form-section-title"><i class="bi bi-person me-2"></i>Personal Information</div>
+
+        <div class="mb-3">
+          <label class="form-label">Full Name <span class="text-danger">*</span></label>
+          <input type="text" name="full_name" class="form-control"
+                 placeholder="e.g. Ramesh Kumar" required
+                 value="{{ form_data.get('full_name', '') }}">
+        </div>
+
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label">Phone Number</label>
+            <input type="tel" name="phone_number" class="form-control"
+                   placeholder="10-digit mobile number"
+                   value="{{ form_data.get('phone_number', '') }}">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Email</label>
+            <input type="email" name="email" class="form-control"
+                   placeholder="optional"
+                   value="{{ form_data.get('email', '') }}">
+          </div>
+        </div>
+
+        <div class="mb-3 mt-3">
+          <label class="form-label">Date of Birth</label>
+          <input type="date" name="date_of_birth" class="form-control"
+                 value="{{ form_data.get('date_of_birth', '') }}">
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">Address</label>
+          <textarea name="address" class="form-control" rows="3"
+                    placeholder="Full residential address">{{ form_data.get('address', '') }}</textarea>
+        </div>
+
+        <div class="form-section-title"><i class="bi bi-image me-2"></i>Photo Upload</div>
+        <div class="mb-3">
+          <label class="form-label">Customer Photo</label>
+          <input type="file" name="photo" class="form-control" accept="image/*">
+          <div class="form-text">JPG/PNG, max 10 MB</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- KYC + Bank -->
+    <div class="col-xl-6">
+      <div class="form-card">
+        <div class="form-section-title"><i class="bi bi-shield-check me-2"></i>KYC Documents</div>
+
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label">Aadhar Number</label>
+            <input type="text" name="aadhar_number" class="form-control"
+                   maxlength="12" placeholder="12-digit Aadhar"
+                   value="{{ form_data.get('aadhar_number', '') }}">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">PAN Number</label>
+            <input type="text" name="pan_number" class="form-control"
+                   maxlength="10" placeholder="ABCDE1234F"
+                   style="text-transform:uppercase"
+                   value="{{ form_data.get('pan_number', '') }}">
+          </div>
+        </div>
+
+        <div class="mb-3 mt-3">
+          <label class="form-label">KYC Document Upload</label>
+          <input type="file" name="kyc_document" class="form-control"
+                 accept=".pdf,.jpg,.jpeg,.png">
+          <div class="form-text">PDF or image, max 10 MB</div>
+        </div>
+
+        <div class="form-section-title"><i class="bi bi-bank me-2"></i>Bank Details</div>
+
+        <div class="mb-3">
+          <label class="form-label">Bank Name</label>
+          <input type="text" name="bank_name" class="form-control"
+                 placeholder="e.g. State Bank of India"
+                 value="{{ form_data.get('bank_name', '') }}">
+        </div>
+
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label">Account Number</label>
+            <input type="text" name="bank_account_number" class="form-control"
+                   placeholder="Account number"
+                   value="{{ form_data.get('bank_account_number', '') }}">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">IFSC Code</label>
+            <input type="text" name="bank_ifsc_code" class="form-control"
+                   placeholder="e.g. SBIN0001234"
+                   style="text-transform:uppercase"
+                   value="{{ form_data.get('bank_ifsc_code', '') }}">
+          </div>
+        </div>
+
+        <div class="mb-3 mt-3">
+          <label class="form-label">Branch</label>
+          <input type="text" name="bank_branch" class="form-control"
+                 placeholder="Branch name / city"
+                 value="{{ form_data.get('bank_branch', '') }}">
+        </div>
+      </div>
+    </div>
+
+  </div><!-- row -->
+
+  <div class="d-flex gap-3 mt-4">
+    <button type="submit" class="btn btn-primary px-5">
+      <i class="bi bi-person-check me-2"></i>Create Customer
+    </button>
+    <a href="{{ url_for('admin.customers') }}" class="btn btn-outline-secondary">Cancel</a>
+  </div>
+</form>
+{% endblock %}

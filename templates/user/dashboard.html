@@ -1,0 +1,153 @@
+{% extends "base.html" %}
+{% block title %}My Dashboard — MicroFinance LMS{% endblock %}
+
+{% block breadcrumb %}
+<ol class="breadcrumb mb-0 small">
+  <li class="breadcrumb-item active">Dashboard</li>
+</ol>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h2 class="mb-1"><i class="bi bi-speedometer2 me-2 text-primary"></i>My Dashboard</h2>
+    <p class="text-muted mb-0 small">Welcome, <strong>{{ current_user.name }}</strong></p>
+  </div>
+</div>
+
+<!-- Stats -->
+<div class="row g-4 mb-4">
+  <div class="col-md-4">
+    <div class="stat-card border-start border-4 border-success">
+      <div class="d-flex align-items-center justify-content-between">
+        <div>
+          <div class="stat-value text-success">{{ active_count }}</div>
+          <div class="stat-label">Active Loans</div>
+        </div>
+        <i class="bi bi-check-circle-fill text-success" style="font-size:2.8rem;opacity:.2"></i>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="stat-card border-start border-4 border-danger">
+      <div class="d-flex align-items-center justify-content-between">
+        <div>
+          <div class="stat-value text-danger">{{ overdue_count }}</div>
+          <div class="stat-label">Overdue Loans</div>
+        </div>
+        <i class="bi bi-exclamation-triangle-fill text-danger" style="font-size:2.8rem;opacity:.2"></i>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="stat-card border-start border-4 border-primary">
+      <div class="d-flex align-items-center justify-content-between">
+        <div>
+          <div class="stat-value text-primary">₹{{ "{:,.0f}".format(total_collected_today) }}</div>
+          <div class="stat-label">Collected Today</div>
+        </div>
+        <i class="bi bi-cash-coin text-primary" style="font-size:2.8rem;opacity:.2"></i>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-4">
+
+  <!-- Assigned Loans -->
+  <div class="col-xl-7">
+    <div class="table-card">
+      <div class="table-card-header">
+        <h5><i class="bi bi-person-check me-2"></i>My Assigned Loans</h5>
+        <a href="{{ url_for('user.customers') }}" class="btn btn-sm btn-outline-primary">All Customers</a>
+      </div>
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0 small">
+          <thead>
+            <tr>
+              <th>Customer</th>
+              <th>Outstanding</th>
+              <th>Status</th>
+              <th>Due / Overdue</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for loan in loans %}
+            <tr>
+              <td class="fw-semibold">
+                {% if loan.customers %}
+                  <a href="{{ url_for('user.customer_profile', customer_id=loan.customer_id) }}"
+                     class="text-decoration-none">{{ loan.customers.full_name }}</a>
+                  <br>
+                  <span class="text-muted small">{{ loan.customers.phone_number or '' }}</span>
+                {% else %}—{% endif %}
+              </td>
+              <td class="{% if loan.status == 'overdue' %}amount-negative{% endif %} fw-semibold">
+                ₹{{ "{:,.2f}".format(loan.outstanding_balance | float) }}
+              </td>
+              <td><span class="badge-{{ loan.status }}">{{ loan.status | title }}</span></td>
+              <td>
+                {% if loan.status == 'overdue' %}
+                  <span class="badge bg-danger rounded-pill">{{ loan.days_overdue }}d overdue</span>
+                {% elif loan.days_remaining >= 0 %}
+                  <span class="small text-muted">{{ loan.days_remaining }}d left</span>
+                {% else %}
+                  <span class="badge bg-success">Cleared</span>
+                {% endif %}
+              </td>
+              <td>
+                <a href="{{ url_for('user.customer_profile', customer_id=loan.customer_id) }}"
+                   class="btn btn-sm btn-primary">
+                  <i class="bi bi-cash-coin"></i> Collect
+                </a>
+              </td>
+            </tr>
+            {% else %}
+            <tr>
+              <td colspan="5" class="text-center text-muted py-5">
+                <i class="bi bi-inbox display-5 d-block mb-3"></i>No loans assigned yet.
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Recent Payments -->
+  <div class="col-xl-5">
+    <div class="table-card">
+      <div class="table-card-header">
+        <h5><i class="bi bi-clock-history me-2"></i>My Recent Collections</h5>
+      </div>
+      <div class="table-responsive">
+        <table class="table align-middle mb-0 small">
+          <thead>
+            <tr>
+              <th>Customer</th>
+              <th>Amount</th>
+              <th>Date</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for p in recent_payments %}
+            <tr>
+              <td>{{ p.customers.full_name if p.customers else '—' }}</td>
+              <td class="amount-positive fw-semibold">₹{{ "{:,.2f}".format(p.amount_paid | float) }}</td>
+              <td class="text-muted">{{ p.payment_date[:10] if p.payment_date else '—' }}</td>
+            </tr>
+            {% else %}
+            <tr>
+              <td colspan="3" class="text-center text-muted py-4">No payments yet</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

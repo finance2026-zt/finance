@@ -1,0 +1,3 @@
+# This folder stores uploaded KYC documents and customer photos.
+# Files are served at /static/uploads/<filename>
+# Add this folder to .gitignore to avoid committing sensitive documents.

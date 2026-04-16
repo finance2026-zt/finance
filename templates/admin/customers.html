@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% block title %}Customers — MicroFinance LMS{% endblock %}
+
+{% block breadcrumb %}
+<ol class="breadcrumb mb-0 small">
+  <li class="breadcrumb-item active">Customers</li>
+</ol>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h2 class="mb-1"><i class="bi bi-people me-2 text-primary"></i>Customers</h2>
+    <p class="text-muted mb-0 small">{{ customers | length }} customer{{ 's' if customers | length != 1 }}</p>
+  </div>
+  <a href="{{ url_for('admin.new_customer') }}" class="btn btn-primary">
+    <i class="bi bi-person-plus me-1"></i>Add Customer
+  </a>
+</div>
+
+<!-- Search card -->
+<div class="table-card mb-4">
+  <div class="table-card-header">
+    <form method="GET" class="d-flex gap-2 w-100">
+      <div class="input-group" style="max-width:420px">
+        <span class="input-group-text bg-white"><i class="bi bi-search text-muted"></i></span>
+        <input type="text" name="search" class="form-control"
+               placeholder="Search by name…" value="{{ search }}" />
+      </div>
+      <button type="submit" class="btn btn-primary">Search</button>
+      {% if search %}
+        <a href="{{ url_for('admin.customers') }}" class="btn btn-outline-secondary">
+          <i class="bi bi-x-lg"></i> Clear
+        </a>
+      {% endif %}
+    </form>
+  </div>
+
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead>
+        <tr>
+          <th>Customer ID</th>
+          <th>Name</th>
+          <th>Phone</th>
+          <th>Aadhar</th>
+          <th>Loan Status</th>
+          <th>Outstanding</th>
+          <th class="text-end">Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in customers %}
+        {% set c = item.customer %}
+        {% set loan = item.latest_loan %}
+        <tr>
+          <td><code class="small">{{ c.customer_id }}</code></td>
+          <td>
+            <a href="{{ url_for('admin.customer_profile', customer_id=c.id) }}"
+               class="fw-semibold text-decoration-none">
+              {{ c.full_name }}
+            </a>
+          </td>
+          <td class="text-muted">{{ c.phone_number or '—' }}</td>
+          <td class="text-muted small">
+            {% if c.aadhar_number %}
+              ****{{ c.aadhar_number[-4:] }}
+            {% else %}—{% endif %}
+          </td>
+          <td>
+            {% if loan %}
+              <span class="badge-{{ loan.status }}">{{ loan.status | title }}</span>
+            {% else %}
+              <span class="text-muted small">No loan</span>
+            {% endif %}
+          </td>
+          <td>
+            {% if loan and loan.status != 'cleared' %}
+              <span class="fw-semibold">₹{{ "{:,.2f}".format(loan.outstanding_balance | float) }}</span>
+            {% else %}—{% endif %}
+          </td>
+          <td class="text-end">
+            <a href="{{ url_for('admin.customer_profile', customer_id=c.id) }}"
+               class="btn btn-sm btn-outline-primary me-1">
+              <i class="bi bi-eye"></i> View
+            </a>
+            <a href="{{ url_for('admin.new_loan', customer_id=c.id) }}"
+               class="btn btn-sm btn-outline-success">
+              <i class="bi bi-plus"></i> Loan
+            </a>
+          </td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="7" class="text-center text-muted py-5">
+            <i class="bi bi-people display-6 d-block mb-3 text-muted"></i>
+            {% if search %}
+              No customers found matching "<strong>{{ search }}</strong>"
+            {% else %}
+              No customers yet. <a href="{{ url_for('admin.new_customer') }}">Add the first one!</a>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

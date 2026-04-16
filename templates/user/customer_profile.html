@@ -1,0 +1,252 @@
+{% extends "base.html" %}
+{% block title %}{{ customer.full_name }} — MicroFinance LMS{% endblock %}
+
+{% block breadcrumb %}
+<ol class="breadcrumb mb-0 small">
+  <li class="breadcrumb-item"><a href="{{ url_for('user.customers') }}">My Customers</a></li>
+  <li class="breadcrumb-item active">{{ customer.full_name }}</li>
+</ol>
+{% endblock %}
+
+{% block content %}
+
+<!-- Profile Header -->
+<div class="profile-header mb-4">
+  <div class="d-flex align-items-center gap-4 flex-wrap">
+    {% if customer.photo_url %}
+      <img src="{{ customer.photo_url }}" alt="Photo"
+           class="rounded-circle"
+           style="width:76px;height:76px;object-fit:cover;border:3px solid rgba(255,255,255,.3)">
+    {% else %}
+      <div class="profile-avatar">{{ customer.full_name[0].upper() }}</div>
+    {% endif %}
+    <div>
+      <h2 class="mb-1 fw-bold">{{ customer.full_name }}</h2>
+      <div class="d-flex flex-wrap gap-3 opacity-85">
+        <span><code class="text-light small">{{ customer.customer_id }}</code></span>
+        {% if customer.phone_number %}
+          <span><i class="bi bi-telephone me-1"></i>{{ customer.phone_number }}</span>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-4">
+
+  <!-- Left: quick info -->
+  <div class="col-xl-4">
+    <div class="table-card mb-4">
+      <div class="table-card-header">
+        <h5><i class="bi bi-person me-2 text-primary"></i>Details</h5>
+      </div>
+      <div class="p-4 small">
+        {% if customer.address %}
+        <div class="mb-3">
+          <div class="text-muted fw-semibold text-uppercase" style="letter-spacing:.5px">Address</div>
+          <div>{{ customer.address }}</div>
+        </div>
+        {% endif %}
+        {% if customer.date_of_birth %}
+        <div class="mb-3">
+          <div class="text-muted fw-semibold text-uppercase" style="letter-spacing:.5px">Date of Birth</div>
+          <div>{{ customer.date_of_birth }}</div>
+        </div>
+        {% endif %}
+        {% if customer.bank_name %}
+        <div class="mb-3">
+          <div class="text-muted fw-semibold text-uppercase" style="letter-spacing:.5px">Bank</div>
+          <div>{{ customer.bank_name }}</div>
+          {% if customer.bank_account_number %}
+          <div class="text-muted">A/C: {{ customer.bank_account_number }}</div>
+          {% endif %}
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Right: Loans + Payments -->
+  <div class="col-xl-8">
+
+    <!-- Loan Cards -->
+    {% for loan in loans %}
+    <div class="table-card mb-4">
+      <div class="table-card-header">
+        <div>
+          <code class="fw-bold">{{ loan.loan_id }}</code>
+          <span class="badge-{{ loan.status }} ms-2">{{ loan.status | title }}</span>
+        </div>
+      </div>
+      <div class="p-4">
+
+        <!-- Loan grid -->
+        <div class="row g-3 mb-3">
+          <div class="col-6 col-md-3">
+            <div class="text-muted small">Principal</div>
+            <div class="fw-bold">₹{{ "{:,.0f}".format(loan.principal_amount | float) }}</div>
+          </div>
+          <div class="col-6 col-md-3">
+            <div class="text-muted small">Total Repayable</div>
+            <div class="fw-bold">₹{{ "{:,.0f}".format(loan.total_repayable_amount | float) }}</div>
+          </div>
+          <div class="col-6 col-md-3">
+            <div class="text-muted small">Daily EMI</div>
+            <div class="fw-bold">₹{{ "{:,.2f}".format(loan.daily_emi | float) }}</div>
+          </div>
+          <div class="col-6 col-md-3">
+            <div class="text-muted small">Outstanding</div>
+            <div class="fw-bold
+              {% if loan.status == 'overdue' %}text-danger
+              {% elif loan.status == 'cleared' %}text-success{% endif %}">
+              ₹{{ "{:,.2f}".format(loan.outstanding_balance | float) }}
+            </div>
+          </div>
+          <div class="col-6 col-md-3">
+            <div class="text-muted small">Due Date</div>
+            <div class="fw-bold">{{ loan.due_date }}</div>
+          </div>
+          <div class="col-6 col-md-3">
+            <div class="text-muted small">Interest Rate</div>
+            <div class="fw-bold">{{ loan.interest_rate_percent }}%</div>
+          </div>
+        </div>
+
+        <!-- Progress -->
+        {% set total_rep = loan.total_repayable_amount | float %}
+        {% set outstanding = loan.outstanding_balance | float %}
+        {% set paid_pct = [(((total_rep - outstanding) / total_rep) * 100) | round(1), 0] | max if total_rep > 0 else 0 %}
+        <div class="d-flex justify-content-between small mb-1">
+          <span>Repayment Progress</span>
+          <span class="fw-semibold">{{ paid_pct }}%</span>
+        </div>
+        <div class="loan-progress mb-3">
+          <div class="loan-progress-fill bg-{% if loan.status == 'overdue' %}danger{% elif loan.status == 'cleared' %}success{% else %}primary{% endif %}"
+               style="width:{{ paid_pct }}%"></div>
+        </div>
+
+        <!-- Alerts -->
+        {% if loan.status == 'overdue' %}
+        <div class="alert alert-danger py-2 small mb-3">
+          <i class="bi bi-exclamation-triangle-fill me-1"></i>
+          <strong>{{ loan.days_overdue }} day{{ 's' if loan.days_overdue != 1 }} overdue.</strong>
+          Penalty accrued: <strong>₹{{ "{:,.2f}".format(loan.penalty_balance | float) }}</strong>
+        </div>
+        {% elif loan.status == 'active' and loan.days_remaining >= 0 %}
+        <div class="alert alert-info py-2 small mb-3">
+          <i class="bi bi-calendar-check me-1"></i>
+          <strong>{{ loan.days_remaining }} day{{ 's' if loan.days_remaining != 1 }} remaining</strong>
+        </div>
+        {% elif loan.status == 'cleared' %}
+        <div class="alert alert-success py-2 small mb-3">
+          <i class="bi bi-check-circle-fill me-1"></i>Loan fully cleared.
+        </div>
+        {% endif %}
+
+        <!-- Collect Payment button -->
+        {% if loan.status != 'cleared' %}
+        <button type="button" class="btn btn-primary"
+                onclick="openPaymentModal('{{ loan.id }}', {{ loan.outstanding_balance | float }})">
+          <i class="bi bi-cash-coin me-2"></i>Collect Payment
+        </button>
+        {% endif %}
+
+      </div>
+    </div>
+    {% else %}
+    <div class="table-card mb-4">
+      <div class="p-5 text-center text-muted">
+        <i class="bi bi-cash display-5 d-block mb-3"></i>No active loans assigned to you for this customer.
+      </div>
+    </div>
+    {% endfor %}
+
+    <!-- Payment History -->
+    <div class="table-card mb-4">
+      <div class="table-card-header">
+        <h5><i class="bi bi-receipt me-2"></i>Payment History</h5>
+        <span class="badge bg-secondary rounded-pill">{{ payments | length }}</span>
+      </div>
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0 small">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Amount Paid</th>
+              <th>Balance After</th>
+              <th>Collected By</th>
+              <th>Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for p in payments %}
+            <tr>
+              <td>{{ p.payment_date[:10] if p.payment_date else '—' }}</td>
+              <td class="amount-positive fw-semibold">₹{{ "{:,.2f}".format(p.amount_paid | float) }}</td>
+              <td>₹{{ "{:,.2f}".format(p.balance_after | float) }}</td>
+              <td>{{ p.users.name if p.users else '—' }}</td>
+              <td class="text-muted">{{ p.notes or '—' }}</td>
+            </tr>
+            {% else %}
+            <tr>
+              <td colspan="5" class="text-center text-muted py-4">No payments recorded</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Penalty Log (if any) -->
+    {% if penalty_logs %}
+    <div class="table-card">
+      <div class="table-card-header">
+        <h5><i class="bi bi-calendar-x text-danger me-2"></i>Penalty Log</h5>
+      </div>
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0 small">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Penalty Amount</th>
+              <th>Balance Before</th>
+              <th>Balance After</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for pl in penalty_logs %}
+            <tr>
+              <td>{{ pl.penalty_date }}</td>
+              <td class="amount-negative">₹{{ "{:,.2f}".format(pl.penalty_amount | float) }}</td>
+              <td>₹{{ "{:,.2f}".format(pl.balance_before_penalty | float) }}</td>
+              <td>₹{{ "{:,.2f}".format(pl.balance_after_penalty | float) }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    {% endif %}
+
+  </div><!-- col -->
+</div><!-- row -->
+
+<!-- Wire up the payment form action dynamically -->
+{% block scripts %}
+<script>
+  // Set the form action URL when modal opens
+  function openPaymentModal(loanId, balance) {
+    document.getElementById('paymentForm').action =
+      '/user/loans/' + loanId + '/collect';
+    document.getElementById('currentBalanceDisplay').textContent =
+      '₹' + parseFloat(balance).toLocaleString('en-IN', {
+        minimumFractionDigits: 2, maximumFractionDigits: 2
+      });
+    document.getElementById('paymentAmount').value = '';
+    document.getElementById('paymentNotes').value  = '';
+    new bootstrap.Modal(document.getElementById('paymentModal')).show();
+  }
+</script>
+{% endblock %}
+
+{% endblock %}

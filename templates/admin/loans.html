@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+{% block title %}Loans{% if status_filter %} — {{ status_filter | title }}{% endif %} — MicroFinance LMS{% endblock %}
+
+{% block breadcrumb %}
+<ol class="breadcrumb mb-0 small">
+  <li class="breadcrumb-item active">Loans{% if status_filter %} / {{ status_filter | title }}{% endif %}</li>
+</ol>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h2 class="mb-1">
+      <i class="bi bi-cash-stack me-2 text-primary"></i>
+      {% if status_filter %}{{ status_filter | title }} Loans{% else %}All Loans{% endif %}
+    </h2>
+    <p class="text-muted mb-0 small">{{ loans | length }} loan{{ 's' if loans | length != 1 }}</p>
+  </div>
+  <form method="POST" action="{{ url_for('admin.run_penalty_now') }}"
+        onsubmit="return confirm('Apply penalty for all overdue loans (backfills all missed days)?')">
+    <button type="submit" class="btn btn-outline-warning">
+      <i class="bi bi-lightning-charge me-1"></i>Apply Pending Penalties
+    </button>
+  </form>
+</div>
+
+<!-- Status Tabs -->
+<div class="mb-4">
+  <ul class="nav nav-pills gap-2">
+    <li class="nav-item">
+      <a class="nav-link {% if not status_filter %}active{% endif %}"
+         href="{{ url_for('admin.loans') }}">All</a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link {% if status_filter == 'active' %}active bg-success{% endif %}"
+         href="{{ url_for('admin.loans', status_filter='active') }}">Active</a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link {% if status_filter == 'overdue' %}active bg-danger{% endif %}"
+         href="{{ url_for('admin.loans', status_filter='overdue') }}">Overdue</a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link {% if status_filter == 'cleared' %}active bg-primary{% endif %}"
+         href="{{ url_for('admin.loans', status_filter='cleared') }}">Cleared</a>
+    </li>
+  </ul>
+</div>
+
+<div class="table-card">
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead>
+        <tr>
+          <th>Loan ID</th>
+          <th>Customer</th>
+          <th>Principal</th>
+          <th>Outstanding</th>
+          <th>Due Date</th>
+          <th>Days Overdue</th>
+          <th>Status</th>
+          <th class="text-end">Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for loan in loans %}
+        <tr>
+          <td><code class="small">{{ loan.loan_id }}</code></td>
+          <td>
+            {% if loan.customers %}
+              <a href="{{ url_for('admin.customer_profile', customer_id=loan.customer_id) }}"
+                 class="fw-semibold text-decoration-none">
+                {{ loan.customers.full_name }}
+              </a>
+              <br>
+              <span class="text-muted small">{{ loan.customers.customer_id }}</span>
+            {% else %}—{% endif %}
+          </td>
+          <td>₹{{ "{:,.2f}".format(loan.principal_amount | float) }}</td>
+          <td>
+            <span class="{% if loan.status == 'overdue' %}amount-negative{% elif loan.status == 'cleared' %}text-success{% endif %} fw-semibold">
+              ₹{{ "{:,.2f}".format(loan.outstanding_balance | float) }}
+            </span>
+          </td>
+          <td>{{ loan.due_date }}</td>
+          <td>
+            {% if loan.days_overdue > 0 %}
+              <span class="badge bg-danger rounded-pill">{{ loan.days_overdue }}d</span>
+            {% else %}
+              <span class="text-muted">—</span>
+            {% endif %}
+          </td>
+          <td><span class="badge-{{ loan.status }}">{{ loan.status | title }}</span></td>
+          <td class="text-end">
+            <a href="{{ url_for('admin.loan_detail', loan_id=loan.id) }}"
+               class="btn btn-sm btn-outline-primary">
+              <i class="bi bi-eye"></i>
+            </a>
+          </td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="8" class="text-center text-muted py-5">
+            <i class="bi bi-inbox display-6 d-block mb-3"></i>No loans found.
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

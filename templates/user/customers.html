@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% block title %}My Customers — MicroFinance LMS{% endblock %}
+
+{% block breadcrumb %}
+<ol class="breadcrumb mb-0 small">
+  <li class="breadcrumb-item active">My Customers</li>
+</ol>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h2><i class="bi bi-people me-2 text-primary"></i>My Customers</h2>
+    <p class="text-muted mb-0 small">
+      {{ customers | length }} customer{{ 's' if customers | length != 1 }} assigned to you
+    </p>
+  </div>
+</div>
+
+<div class="table-card">
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead>
+        <tr>
+          <th>Customer</th>
+          <th>Phone</th>
+          <th>Loan Status</th>
+          <th>Outstanding</th>
+          <th>Due / Overdue</th>
+          <th class="text-end">Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for cust in customers %}
+        {% set loan = cust.latest_loan %}
+        <tr>
+          <td>
+            <a href="{{ url_for('user.customer_profile', customer_id=cust.id) }}"
+               class="fw-semibold text-decoration-none">
+              {{ cust.full_name }}
+            </a>
+            <br>
+            <code class="text-muted small">{{ cust.customer_id }}</code>
+          </td>
+          <td class="text-muted">{{ cust.phone_number or '—' }}</td>
+          <td>
+            {% if loan %}
+              <span class="badge-{{ loan.status }}">{{ loan.status | title }}</span>
+            {% else %}
+              <span class="text-muted small">—</span>
+            {% endif %}
+          </td>
+          <td>
+            {% if loan and loan.status != 'cleared' %}
+              <span class="fw-semibold {% if loan.status == 'overdue' %}amount-negative{% endif %}">
+                ₹{{ "{:,.2f}".format(loan.outstanding_balance | float) }}
+              </span>
+            {% else %}—{% endif %}
+          </td>
+          <td>
+            {% if loan %}
+              {% if loan.status == 'overdue' %}
+                <span class="badge bg-danger rounded-pill">{{ loan.days_overdue }}d overdue</span>
+              {% elif loan.status == 'active' %}
+                <span class="small text-muted">{{ loan.days_remaining }}d remaining</span>
+              {% else %}
+                <span class="small text-success">Cleared</span>
+              {% endif %}
+            {% else %}—{% endif %}
+          </td>
+          <td class="text-end">
+            <a href="{{ url_for('user.customer_profile', customer_id=cust.id) }}"
+               class="btn btn-sm btn-primary">
+              <i class="bi bi-cash-coin me-1"></i>View / Collect
+            </a>
+          </td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="6" class="text-center text-muted py-5">
+            <i class="bi bi-person-x display-5 d-block mb-3"></i>
+            No customers assigned to you yet.
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

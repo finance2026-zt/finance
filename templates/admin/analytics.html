@@ -1,0 +1,269 @@
+{% extends "base.html" %}
+{% block title %}Analytics — MicroFinance LMS{% endblock %}
+
+{% block breadcrumb %}
+<ol class="breadcrumb mb-0 small">
+  <li class="breadcrumb-item active">Analytics</li>
+</ol>
+{% endblock %}
+
+{% block head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h2><i class="bi bi-bar-chart-line me-2 text-primary"></i>Portfolio Analytics</h2>
+</div>
+
+<!-- ── KPI Cards ──────────────────────────────────────────────────────────── -->
+<div class="row g-4 mb-4">
+  <div class="col-xl-3 col-md-6">
+    <div class="stat-card">
+      <div class="stat-icon" style="background:rgba(37,99,235,.1)">
+        <i class="bi bi-briefcase" style="color:#2563eb"></i>
+      </div>
+      <div class="stat-value">₹{{ "{:,.0f}".format(total_portfolio) }}</div>
+      <div class="stat-label">Total Portfolio Value</div>
+    </div>
+  </div>
+  <div class="col-xl-3 col-md-6">
+    <div class="stat-card">
+      <div class="stat-icon" style="background:rgba(234,88,12,.1)">
+        <i class="bi bi-wallet2" style="color:#ea580c"></i>
+      </div>
+      <div class="stat-value">₹{{ "{:,.0f}".format(total_outstanding) }}</div>
+      <div class="stat-label">Total Outstanding</div>
+    </div>
+  </div>
+  <div class="col-xl-3 col-md-6">
+    <div class="stat-card">
+      <div class="stat-icon" style="background:rgba(22,163,74,.1)">
+        <i class="bi bi-check2-circle" style="color:#16a34a"></i>
+      </div>
+      <div class="stat-value">₹{{ "{:,.0f}".format(total_collected) }}</div>
+      <div class="stat-label">Total Collected</div>
+    </div>
+  </div>
+  <div class="col-xl-3 col-md-6">
+    <div class="stat-card">
+      <div class="stat-icon" style="background:rgba(220,38,38,.1)">
+        <i class="bi bi-exclamation-triangle" style="color:#dc2626"></i>
+      </div>
+      <div class="stat-value">₹{{ "{:,.0f}".format(total_penalty_accumulated) }}</div>
+      <div class="stat-label">Penalty Accumulated</div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Charts Row ─────────────────────────────────────────────────────────── -->
+<div class="row g-4 mb-4">
+
+  <!-- Monthly Disbursements vs Collections -->
+  <div class="col-xl-8">
+    <div class="table-card">
+      <div class="table-card-header">
+        <h5><i class="bi bi-bar-chart me-2"></i>Monthly Disbursements vs Collections</h5>
+      </div>
+      <div class="p-4">
+        <div class="chart-container"><canvas id="disbursementsChart"></canvas></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loan Status Distribution -->
+  <div class="col-xl-4">
+    <div class="table-card">
+      <div class="table-card-header">
+        <h5><i class="bi bi-pie-chart me-2"></i>Loan Status</h5>
+      </div>
+      <div class="p-4">
+        <div class="chart-container"><canvas id="statusChart"></canvas></div>
+        <div class="d-flex justify-content-center gap-3 mt-3 small">
+          <span><span class="badge bg-success me-1">Active:</span> {{ status_counts.active }}</span>
+          <span><span class="badge bg-danger me-1">Overdue:</span> {{ status_counts.overdue }}</span>
+          <span><span class="badge bg-primary me-1">Cleared:</span> {{ status_counts.cleared }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Penalty Trend -->
+  <div class="col-xl-6">
+    <div class="table-card">
+      <div class="table-card-header">
+        <h5><i class="bi bi-graph-up-arrow text-danger me-2"></i>Monthly Penalty Trend</h5>
+      </div>
+      <div class="p-4">
+        <div class="chart-container"><canvas id="penaltyChart"></canvas></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Field User Performance -->
+  <div class="col-xl-6">
+    <div class="table-card">
+      <div class="table-card-header">
+        <h5><i class="bi bi-people me-2"></i>Field User Performance</h5>
+      </div>
+      <div class="table-responsive">
+        <table class="table align-middle mb-0 small">
+          <thead>
+            <tr>
+              <th>Field User</th>
+              <th>Loans Assigned</th>
+              <th>Total Collected</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for up in user_performance %}
+            <tr>
+              <td class="fw-semibold">{{ up.user.name }}</td>
+              <td>{{ up.assigned_loans }}</td>
+              <td class="amount-positive">₹{{ "{:,.2f}".format(up.total_collected) }}</td>
+            </tr>
+            {% else %}
+            <tr>
+              <td colspan="3" class="text-center text-muted py-4">No field users</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ── Top Overdue Table ───────────────────────────────────────────────────── -->
+<div class="table-card">
+  <div class="table-card-header">
+    <h5><i class="bi bi-exclamation-triangle text-danger me-2"></i>Top 10 Overdue Customers</h5>
+  </div>
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0 small">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Customer</th>
+          <th>Loan ID</th>
+          <th>Outstanding</th>
+          <th>Penalty Balance</th>
+          <th>Days Overdue</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in overdue_data %}
+        <tr>
+          <td class="text-muted">{{ loop.index }}</td>
+          <td>
+            <a href="{{ url_for('admin.customer_profile', customer_id=item.loan.customer_id) }}"
+               class="fw-semibold text-decoration-none">
+              {{ item.customer.full_name or '—' }}
+            </a>
+          </td>
+          <td><code>{{ item.loan.loan_id }}</code></td>
+          <td class="amount-negative fw-semibold">₹{{ "{:,.2f}".format(item.loan.outstanding_balance | float) }}</td>
+          <td class="text-danger">₹{{ "{:,.2f}".format(item.loan.penalty_balance | float) }}</td>
+          <td><span class="badge bg-danger rounded-pill">{{ item.days_overdue }}d</span></td>
+          <td>
+            <a href="{{ url_for('admin.loan_detail', loan_id=item.loan.id) }}"
+               class="btn btn-sm btn-outline-primary">View</a>
+          </td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="7" class="text-center text-muted py-5">
+            <i class="bi bi-emoji-smile display-5 d-block text-success mb-2"></i>No overdue loans!
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+const months        = {{ chart_months | safe }};
+const disbursements = {{ chart_disbursements | safe }};
+const collections   = {{ chart_collections  | safe }};
+const penalties     = {{ chart_penalty      | safe }};
+
+// ── Bar: Disbursements vs Collections ──────────────────────────────────────
+new Chart(document.getElementById('disbursementsChart'), {
+  type: 'bar',
+  data: {
+    labels: months,
+    datasets: [
+      {
+        label: 'Disbursements (₹)',
+        data: disbursements,
+        backgroundColor: 'rgba(37,99,235,.75)',
+        borderRadius: 6,
+      },
+      {
+        label: 'Collections (₹)',
+        data: collections,
+        backgroundColor: 'rgba(22,163,74,.75)',
+        borderRadius: 6,
+      }
+    ]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { position: 'top' } },
+    scales: {
+      y: { ticks: { callback: v => '₹' + (v/1000).toFixed(0) + 'k' } }
+    }
+  }
+});
+
+// ── Donut: Loan Status ──────────────────────────────────────────────────────
+new Chart(document.getElementById('statusChart'), {
+  type: 'doughnut',
+  data: {
+    labels: ['Active', 'Overdue', 'Cleared'],
+    datasets: [{
+      data: [
+        {{ status_counts.active }},
+        {{ status_counts.overdue }},
+        {{ status_counts.cleared }}
+      ],
+      backgroundColor: ['#22c55e', '#ef4444', '#3b82f6'],
+      borderWidth: 2, borderColor: '#fff',
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    cutout: '65%',
+    plugins: { legend: { display: false } }
+  }
+});
+
+// ── Line: Penalty Trend ─────────────────────────────────────────────────────
+new Chart(document.getElementById('penaltyChart'), {
+  type: 'line',
+  data: {
+    labels: months,
+    datasets: [{
+      label: 'Penalty (₹)',
+      data: penalties,
+      borderColor: '#ef4444',
+      backgroundColor: 'rgba(239,68,68,.1)',
+      fill: true, tension: 0.4, pointRadius: 4,
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: {
+      y: { ticks: { callback: v => '₹' + (v/1000).toFixed(1) + 'k' } }
+    }
+  }
+});
+</script>
+{% endblock %}

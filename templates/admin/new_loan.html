@@ -1,0 +1,205 @@
+{% extends "base.html" %}
+{% block title %}New Loan — {{ customer.full_name }} — MicroFinance LMS{% endblock %}
+
+{% block breadcrumb %}
+<ol class="breadcrumb mb-0 small">
+  <li class="breadcrumb-item"><a href="{{ url_for('admin.customers') }}">Customers</a></li>
+  <li class="breadcrumb-item">
+    <a href="{{ url_for('admin.customer_profile', customer_id=customer.id) }}">{{ customer.full_name }}</a>
+  </li>
+  <li class="breadcrumb-item active">New Loan</li>
+</ol>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h2><i class="bi bi-plus-circle me-2 text-primary"></i>New Loan</h2>
+    <p class="text-muted mb-0 small">
+      Customer: <strong>{{ customer.full_name }}</strong>
+      <code class="ms-1">{{ customer.customer_id }}</code>
+    </p>
+  </div>
+</div>
+
+<div class="row g-4">
+  <div class="col-xl-7">
+    <div class="form-card">
+      <form method="POST" novalidate id="loanForm">
+
+        <div class="form-section-title"><i class="bi bi-cash-coin me-2"></i>Loan Parameters</div>
+
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label">Principal Amount (₹) <span class="text-danger">*</span></label>
+            <div class="input-group">
+              <span class="input-group-text">₹</span>
+              <input type="number" id="principal_amount" name="principal_amount"
+                     class="form-control" step="0.01" min="1"
+                     placeholder="e.g. 100000" required
+                     value="{{ form_data.get('principal_amount', '') }}">
+            </div>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Interest Rate (%) <span class="text-danger">*</span></label>
+            <div class="input-group">
+              <input type="number" id="interest_rate_percent" name="interest_rate_percent"
+                     class="form-control" step="0.01" min="0" max="100"
+                     placeholder="e.g. 17" required
+                     value="{{ form_data.get('interest_rate_percent', '') }}">
+              <span class="input-group-text">%</span>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Loan Duration (days) <span class="text-danger">*</span></label>
+            <div class="input-group">
+              <input type="number" id="loan_duration_days" name="loan_duration_days"
+                     class="form-control" min="1"
+                     placeholder="e.g. 180" required
+                     value="{{ form_data.get('loan_duration_days', '') }}">
+              <span class="input-group-text">days</span>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Penalty Rate (% / day)</label>
+            <div class="input-group">
+              <input type="number" name="penalty_rate_percent"
+                     class="form-control" step="0.01" min="0"
+                     value="{{ form_data.get('penalty_rate_percent', '1') }}">
+              <span class="input-group-text">%/day</span>
+            </div>
+            <div class="form-text">Applied daily on outstanding after due date</div>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Disbursement Date <span class="text-danger">*</span></label>
+            <input type="date" name="disbursement_date" class="form-control" required
+                   value="{{ form_data.get('disbursement_date', today) }}">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Assign to Field User</label>
+            <select name="assigned_to" class="form-select">
+              <option value="">— Unassigned —</option>
+              {% for fu in field_users %}
+              <option value="{{ fu.id }}"
+                      {% if form_data.get('assigned_to') == fu.id %}selected{% endif %}>
+                {{ fu.name }}
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+
+        <div class="d-flex gap-3 mt-4">
+          <button type="submit" class="btn btn-primary px-5">
+            <i class="bi bi-check-circle me-2"></i>Create Loan
+          </button>
+          <a href="{{ url_for('admin.customer_profile', customer_id=customer.id) }}"
+             class="btn btn-outline-secondary">Cancel</a>
+        </div>
+
+      </form>
+    </div>
+  </div>
+
+  <!-- Live Preview -->
+  <div class="col-xl-5">
+    <div class="table-card" id="loan_preview" style="display:none">
+      <div class="table-card-header">
+        <h5><i class="bi bi-calculator me-2 text-primary"></i>Live Calculation Preview</h5>
+      </div>
+      <div class="p-4">
+        <div class="row g-3">
+          <div class="col-6">
+            <div class="text-muted small">Total Interest</div>
+            <div class="fw-bold fs-5" id="preview_interest">—</div>
+          </div>
+          <div class="col-6">
+            <div class="text-muted small">Total Repayable</div>
+            <div class="fw-bold fs-5 text-primary" id="preview_repayable">—</div>
+          </div>
+          <div class="col-6">
+            <div class="text-muted small">Daily EMI</div>
+            <div class="fw-bold" id="preview_emi">—</div>
+          </div>
+          <div class="col-6">
+            <div class="text-muted small">Due Date</div>
+            <div class="fw-bold" id="preview_due_date">—</div>
+          </div>
+        </div>
+        <div class="alert alert-info small py-2 mt-3 mb-0">
+          <i class="bi bi-info-circle me-1"></i>
+          Penalty of <strong id="preview_penalty_rate">—</strong> per day will compound on outstanding
+          balance after the due date.
+        </div>
+      </div>
+    </div>
+
+    <div class="form-card mt-4" style="background:linear-gradient(135deg,#f8fafc,#eff6ff)">
+      <h6 class="fw-bold mb-3"><i class="bi bi-lightbulb me-2 text-warning"></i>Example Calculation</h6>
+      <div class="small text-muted">
+        <strong>₹1,00,000 at 17% for 180 days:</strong><br>
+        Interest = ₹17,000<br>
+        Total Repayable = ₹1,17,000<br>
+        Daily EMI = ₹650 / day<br>
+        <br>
+        <strong>After due date (penalty 1%/day):</strong><br>
+        Day 1: ₹58,500 × 1% = ₹585 penalty<br>
+        New balance = ₹59,085<br>
+        Day 2: ₹59,085 × 1% = ₹590.85 (compounds!)
+      </div>
+    </div>
+  </div>
+
+</div><!-- row -->
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // Real-time loan preview
+  const fields = ['principal_amount', 'interest_rate_percent', 'loan_duration_days'];
+  fields.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('input', debounce(updatePreview, 400));
+  });
+
+  document.querySelector('[name="disbursement_date"]')
+    ?.addEventListener('change', updateDueDatePreview);
+
+  function updatePreview() {
+    const principal = parseFloat(document.getElementById('principal_amount')?.value || 0);
+    const rate      = parseFloat(document.getElementById('interest_rate_percent')?.value || 0);
+    const days      = parseInt(document.getElementById('loan_duration_days')?.value || 0);
+
+    if (!principal || !rate || !days) return;
+
+    fetch('/api/calculate_loan', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ principal_amount: principal, interest_rate_percent: rate, loan_duration_days: days })
+    })
+    .then(r => r.json())
+    .then(res => {
+      if (!res.success) return;
+      const d = res.data;
+      document.getElementById('preview_interest').textContent   = formatINR(d.total_interest_amount);
+      document.getElementById('preview_repayable').textContent  = formatINR(d.total_repayable_amount);
+      document.getElementById('preview_emi').textContent        = formatINR(d.daily_emi);
+      document.getElementById('loan_preview').style.display     = '';
+      updateDueDatePreview();
+
+      const pRate = parseFloat(document.querySelector('[name="penalty_rate_percent"]')?.value || 1);
+      document.getElementById('preview_penalty_rate').textContent = pRate + '%';
+    });
+  }
+
+  function updateDueDatePreview() {
+    const disbDate = document.querySelector('[name="disbursement_date"]')?.value;
+    const days     = parseInt(document.getElementById('loan_duration_days')?.value || 0);
+    if (!disbDate || !days) return;
+    const d = new Date(disbDate);
+    d.setDate(d.getDate() + days);
+    document.getElementById('preview_due_date').textContent =
+      d.toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric' });
+  }
+</script>
+{% endblock %}

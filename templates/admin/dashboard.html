@@ -1,0 +1,192 @@
+{% extends "base.html" %}
+{% block title %}Admin Dashboard — MicroFinance LMS{% endblock %}
+
+{% block breadcrumb %}
+<ol class="breadcrumb mb-0 small">
+  <li class="breadcrumb-item active">Dashboard</li>
+</ol>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h2 class="mb-1"><i class="bi bi-speedometer2 me-2 text-primary"></i>Dashboard</h2>
+    <p class="text-muted mb-0 small">Welcome back, <strong>{{ current_user.name }}</strong></p>
+  </div>
+  <div class="d-flex gap-2 flex-wrap">
+    <a href="{{ url_for('admin.new_customer') }}" class="btn btn-primary">
+      <i class="bi bi-person-plus me-1"></i>New Customer
+    </a>
+  </div>
+</div>
+
+<!-- ── Key Metrics Row 1 ─────────────────────────────────────────────────── -->
+<div class="row g-4 mb-4">
+  <div class="col-xl-3 col-md-6">
+    <div class="stat-card">
+      <div class="stat-icon" style="background:rgba(37,99,235,.1)">
+        <i class="bi bi-cash-stack" style="color:#2563eb"></i>
+      </div>
+      <div class="stat-value">₹{{ "{:,.0f}".format(total_disbursed) }}</div>
+      <div class="stat-label">Total Disbursed</div>
+    </div>
+  </div>
+  <div class="col-xl-3 col-md-6">
+    <div class="stat-card">
+      <div class="stat-icon" style="background:rgba(234,88,12,.1)">
+        <i class="bi bi-wallet2" style="color:#ea580c"></i>
+      </div>
+      <div class="stat-value">₹{{ "{:,.0f}".format(total_outstanding) }}</div>
+      <div class="stat-label">Total Outstanding</div>
+    </div>
+  </div>
+  <div class="col-xl-3 col-md-6">
+    <div class="stat-card">
+      <div class="stat-icon" style="background:rgba(22,163,74,.1)">
+        <i class="bi bi-check2-circle" style="color:#16a34a"></i>
+      </div>
+      <div class="stat-value">₹{{ "{:,.0f}".format(total_collected) }}</div>
+      <div class="stat-label">Total Collected</div>
+    </div>
+  </div>
+  <div class="col-xl-3 col-md-6">
+    <div class="stat-card">
+      <div class="stat-icon" style="background:rgba(220,38,38,.1)">
+        <i class="bi bi-exclamation-triangle" style="color:#dc2626"></i>
+      </div>
+      <div class="stat-value">₹{{ "{:,.0f}".format(total_penalty) }}</div>
+      <div class="stat-label">Penalty Accrued</div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Loan Status Row ────────────────────────────────────────────────────── -->
+<div class="row g-4 mb-4">
+  <div class="col-md-4">
+    <a href="{{ url_for('admin.loans', status_filter='active') }}" class="text-decoration-none">
+      <div class="stat-card border-start border-4 border-success">
+        <div class="d-flex align-items-center justify-content-between">
+          <div>
+            <div class="stat-value text-success">{{ active_count }}</div>
+            <div class="stat-label">Active Loans</div>
+          </div>
+          <i class="bi bi-check-circle-fill text-success" style="font-size:2.8rem;opacity:.2"></i>
+        </div>
+      </div>
+    </a>
+  </div>
+  <div class="col-md-4">
+    <a href="{{ url_for('admin.loans', status_filter='overdue') }}" class="text-decoration-none">
+      <div class="stat-card border-start border-4 border-danger">
+        <div class="d-flex align-items-center justify-content-between">
+          <div>
+            <div class="stat-value text-danger">{{ overdue_count }}</div>
+            <div class="stat-label">Overdue Loans</div>
+          </div>
+          <i class="bi bi-exclamation-triangle-fill text-danger" style="font-size:2.8rem;opacity:.2"></i>
+        </div>
+      </div>
+    </a>
+  </div>
+  <div class="col-md-4">
+    <a href="{{ url_for('admin.loans', status_filter='cleared') }}" class="text-decoration-none">
+      <div class="stat-card border-start border-4 border-primary">
+        <div class="d-flex align-items-center justify-content-between">
+          <div>
+            <div class="stat-value text-primary">{{ cleared_count }}</div>
+            <div class="stat-label">Cleared Loans</div>
+          </div>
+          <i class="bi bi-shield-check-fill text-primary" style="font-size:2.8rem;opacity:.2"></i>
+        </div>
+      </div>
+    </a>
+  </div>
+</div>
+
+<!-- ── Tables Row ─────────────────────────────────────────────────────────── -->
+<div class="row g-4">
+
+  <!-- Recent Payments -->
+  <div class="col-xl-7">
+    <div class="table-card">
+      <div class="table-card-header">
+        <h5><i class="bi bi-clock-history me-2"></i>Recent Payments</h5>
+        <a href="{{ url_for('admin.loans') }}" class="btn btn-sm btn-outline-primary">View All</a>
+      </div>
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead>
+            <tr>
+              <th>Customer</th>
+              <th>Loan ID</th>
+              <th>Amount Paid</th>
+              <th>Date</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for p in recent_payments %}
+            <tr>
+              <td class="fw-semibold">
+                {{ p.customers.full_name if p.customers else '—' }}
+              </td>
+              <td><code class="small">{{ p.loans.loan_id if p.loans else '—' }}</code></td>
+              <td class="amount-positive">₹{{ "{:,.2f}".format(p.amount_paid | float) }}</td>
+              <td class="text-muted small">{{ p.payment_date[:10] if p.payment_date else '—' }}</td>
+            </tr>
+            {% else %}
+            <tr>
+              <td colspan="4" class="text-center text-muted py-5">
+                <i class="bi bi-inbox display-6 d-block mb-2"></i>No payments recorded yet
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Top Overdue -->
+  <div class="col-xl-5">
+    <div class="table-card">
+      <div class="table-card-header">
+        <h5><i class="bi bi-exclamation-triangle text-danger me-2"></i>Top Overdue</h5>
+        <a href="{{ url_for('admin.loans', status_filter='overdue') }}"
+           class="btn btn-sm btn-outline-danger">View All</a>
+      </div>
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead>
+            <tr>
+              <th>Customer</th>
+              <th>Balance</th>
+              <th>Days</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for item in overdue_data %}
+            <tr>
+              <td>
+                <a href="{{ url_for('admin.customer_profile', customer_id=item.loan.customer_id) }}"
+                   class="fw-semibold text-decoration-none">
+                  {{ item.customer.full_name or '—' }}
+                </a>
+              </td>
+              <td class="amount-negative">₹{{ "{:,.0f}".format(item.loan.outstanding_balance | float) }}</td>
+              <td><span class="badge bg-danger rounded-pill">{{ item.days_overdue }}d</span></td>
+            </tr>
+            {% else %}
+            <tr>
+              <td colspan="3" class="text-center text-muted py-5">
+                <i class="bi bi-emoji-smile display-6 d-block mb-2 text-success"></i>No overdue loans!
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div><!-- row -->
+{% endblock %}

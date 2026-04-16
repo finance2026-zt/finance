@@ -1,0 +1,29 @@
+name: Run Penalty Backfill
+
+on:
+  schedule:
+    # Runs daily at 00:01 IST → that's 18:31 UTC previous day
+    - cron: '31 18 * * *'
+  workflow_dispatch: {}
+
+jobs:
+  run-penalty:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger penalty hook
+        env:
+          VERCEL_URL: ${{ secrets.VERCEL_URL }}
+          SCHEDULER_TOKEN: ${{ secrets.SCHEDULER_TOKEN }}
+        run: |
+          set -e
+          if [ -z "${VERCEL_URL}" ] || [ -z "${SCHEDULER_TOKEN}" ]; then
+            echo "Missing required secrets: VERCEL_URL or SCHEDULER_TOKEN"
+            exit 1
+          fi
+          echo "Calling ${VERCEL_URL}/hooks/run_penalty"
+          http_status=$(curl -s -o /dev/null -w "%{http_code}" -X POST "${VERCEL_URL}/hooks/run_penalty" -H "Authorization: Bearer ${SCHEDULER_TOKEN}" -H "Content-Type: application/json")
+          echo "HTTP status: ${http_status}"
+          if [ "${http_status}" -ge 400 ]; then
+            echo "Penalty hook returned ${http_status}"
+            exit 1
+          fi
