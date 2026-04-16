@@ -228,3 +228,96 @@ function confirmAction(message, formOrCallback) {
   else if (formOrCallback instanceof HTMLFormElement) formOrCallback.submit();
   return true;
 }
+
+// ── Camera / Take Photo (admin new customer) ──────────────────────────────
+document.addEventListener('DOMContentLoaded', function () {
+  const takeBtn = document.getElementById('takePhotoBtn');
+  const photoInput = document.getElementById('photoInput');
+  const preview = document.getElementById('photoPreview');
+  const cameraModalEl = document.getElementById('cameraModal');
+  if (!takeBtn || !photoInput || !cameraModalEl) return;
+
+  const video = document.getElementById('cameraVideo');
+  const canvas = document.getElementById('cameraCanvas');
+  const captureBtn = document.getElementById('capturePhotoBtn');
+  const switchBtn = document.getElementById('switchCameraBtn');
+  const cameraModal = bootstrap.Modal.getOrCreateInstance(cameraModalEl);
+  let stream = null;
+  let facingMode = 'environment';
+
+  async function startCamera() {
+    if (stream) { stream.getTracks().forEach(t => t.stop()); stream = null; }
+    try {
+      const constraints = { video: { facingMode: facingMode }, audio: false };
+      stream = await navigator.mediaDevices.getUserMedia(constraints);
+    } catch (err) {
+      // Some browsers/devices may not support facingMode exact value — try fallback
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+      } catch (err2) {
+        console.error('[Camera] getUserMedia error:', err2 || err);
+        throw err2 || err;
+      }
+    }
+    video.srcObject = stream;
+    await video.play();
+  }
+
+  takeBtn.addEventListener('click', async function () {
+    cameraModal.show();
+    try {
+      await startCamera();
+    } catch (err) {
+      cameraModal.hide();
+      alert('Unable to access camera: ' + (err.message || err));
+    }
+  });
+
+  if (switchBtn) {
+    switchBtn.addEventListener('click', async function () {
+      // Toggle facing mode and restart camera if already open
+      facingMode = (facingMode === 'environment') ? 'user' : 'environment';
+      // Visual feedback (small flash) — optional
+      switchBtn.classList.toggle('active');
+      if (cameraModal._isShown) {
+        try { await startCamera(); } catch (err) { console.warn('[Camera] switch error', err); }
+      }
+    });
+  }
+
+  captureBtn.addEventListener('click', function () {
+    const w = video.videoWidth || 640;
+    const h = video.videoHeight || 480;
+    canvas.width = w; canvas.height = h;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(video, 0, 0, w, h);
+    canvas.toBlob(function (blob) {
+      if (!blob) return;
+      const filename = 'photo_' + Date.now() + '.jpg';
+      try {
+        const file = new File([blob], filename, { type: blob.type });
+        const dt = new DataTransfer();
+        dt.items.add(file);
+        photoInput.files = dt.files;
+        preview.src = URL.createObjectURL(blob);
+        preview.style.display = '';
+      } catch (e) {
+        console.warn('[Camera] File/DataTransfer not supported, skipping attaching file', e);
+      }
+      cameraModal.hide();
+      if (stream) { stream.getTracks().forEach(t => t.stop()); stream = null; }
+    }, 'image/jpeg', 0.95);
+  });
+
+  cameraModalEl.addEventListener('hidden.bs.modal', function () {
+    if (stream) { stream.getTracks().forEach(t => t.stop()); stream = null; }
+  });
+
+  // Show preview when a file is chosen manually
+  photoInput.addEventListener('change', function () {
+    const f = (photoInput.files && photoInput.files[0]);
+    if (!f) { preview.style.display = 'none'; preview.src = ''; return; }
+    preview.src = URL.createObjectURL(f);
+    preview.style.display = '';
+  });
+});
