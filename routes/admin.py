@@ -342,6 +342,76 @@ def customer_profile(customer_id):
     )
 
 
+@admin_bp.route("/customers/<customer_id>/edit", methods=["GET", "POST"])
+@admin_required
+def edit_customer(customer_id):
+    supabase = get_supabase_client()
+    cr = supabase.table("customers").select("*").eq("id", customer_id).limit(1).execute()
+    if not cr.data:
+        flash("Customer not found.", "error")
+        return redirect(url_for("admin.customers"))
+    customer = cr.data[0]
+
+    if request.method == "POST":
+        form = request.form
+        data = {
+            "full_name": form.get("full_name", "").strip(),
+            "phone_number": form.get("phone_number", "").strip(),
+            "email": form.get("email", "").strip(),
+            "date_of_birth": form.get("date_of_birth", "").strip(),
+            "address": form.get("address", "").strip(),
+            "aadhar_number": form.get("aadhar_number", "").strip(),
+            "pan_number": form.get("pan_number", "").strip().upper(),
+            "bank_name": form.get("bank_name", "").strip(),
+            "bank_account_number": form.get("bank_account_number", "").strip(),
+            "bank_ifsc_code": form.get("bank_ifsc_code", "").strip().upper(),
+            "bank_branch": form.get("bank_branch", "").strip(),
+        }
+
+        errors = validate_customer(data)
+        if errors:
+            for e in errors:
+                flash(e, "error")
+            return render_template("admin/edit_customer.html", customer={**customer, **data})
+
+        # Handle file uploads (update photo/kyc if provided)
+        upload_folder = os.path.join(
+            os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+            "static",
+            "uploads",
+        )
+        if not os.environ.get("VERCEL"):
+            os.makedirs(upload_folder, exist_ok=True)
+
+        if "kyc_document" in request.files:
+            url = _save_upload(
+                request.files["kyc_document"],
+                f"{customer['customer_id']}_kyc",
+                upload_folder,
+            )
+            if url:
+                data["kyc_document_url"] = url
+
+        if "photo" in request.files:
+            url = _save_upload(
+                request.files["photo"],
+                f"{customer['customer_id']}_photo",
+                upload_folder,
+            )
+            if url:
+                data["photo_url"] = url
+
+        try:
+            supabase.table("customers").update(data).eq("id", customer_id).execute()
+            flash(f"Customer {customer['customer_id']} updated successfully!", "success")
+            return redirect(url_for("admin.customer_profile", customer_id=customer_id))
+        except Exception as exc:
+            logger.error("Customer update error: %s", exc)
+            flash(f"Error updating customer: {exc}", "error")
+
+    return render_template("admin/edit_customer.html", customer=customer)
+
+
 # ── Loans ───────────────────────────────────────────────────────────────────
 
 @admin_bp.route("/loans/new/<customer_id>", methods=["GET", "POST"])

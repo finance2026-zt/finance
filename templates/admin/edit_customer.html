@@ -1,0 +1,182 @@
+{% extends "base.html" %}
+{% block title %}Edit {{ customer.full_name }} — MicroFinance LMS{% endblock %}
+
+{% block breadcrumb %}
+<ol class="breadcrumb mb-0 small">
+  <li class="breadcrumb-item"><a href="{{ url_for('admin.customers') }}">Customers</a></li>
+  <li class="breadcrumb-item"><a href="{{ url_for('admin.customer_profile', customer_id=customer.id) }}">{{ customer.full_name }}</a></li>
+  <li class="breadcrumb-item active">Edit</li>
+</ol>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h2><i class="bi bi-pencil me-2 text-primary"></i>Edit Customer</h2>
+</div>
+
+<form method="POST" enctype="multipart/form-data" novalidate>
+  <div class="row g-4">
+
+    <!-- Personal Info -->
+    <div class="col-xl-6">
+      <div class="form-card">
+        <div class="form-section-title"><i class="bi bi-person me-2"></i>Personal Information</div>
+
+        <div class="mb-3">
+          <label class="form-label">Full Name <span class="text-danger">*</span></label>
+          <input type="text" name="full_name" class="form-control"
+                 placeholder="e.g. Ramesh Kumar" required
+                 value="{{ customer.get('full_name', '') }}">
+        </div>
+
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label">Phone Number</label>
+            <input type="tel" name="phone_number" class="form-control"
+                   placeholder="10-digit mobile number"
+                   value="{{ customer.get('phone_number', '') }}">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Email</label>
+            <input type="email" name="email" class="form-control"
+                   placeholder="optional"
+                   value="{{ customer.get('email', '') }}">
+          </div>
+        </div>
+
+        <div class="mb-3 mt-3">
+          <label class="form-label">Date of Birth</label>
+          <input type="date" name="date_of_birth" class="form-control"
+                 value="{{ customer.get('date_of_birth', '') }}">
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">Address</label>
+          <textarea name="address" class="form-control" rows="3"
+                    placeholder="Full residential address">{{ customer.get('address', '') }}</textarea>
+        </div>
+
+        <div class="form-section-title"><i class="bi bi-image me-2"></i>Photo Upload</div>
+        <div class="mb-3">
+          <label class="form-label">Customer Photo</label>
+          {% if customer.get('photo_url') %}
+          <div class="mb-2">
+            <img src="{{ customer.get('photo_url') }}" alt="Current Photo" style="max-height:120px; border-radius:6px;">
+            <div class="text-muted small mt-2">Current photo</div>
+          </div>
+          {% endif %}
+          <div class="d-flex gap-2 align-items-start">
+            <input id="photoInput" type="file" name="photo" class="form-control" accept="image/*">
+            <div class="btn-group">
+              <button id="takePhotoBtn" type="button" class="btn btn-outline-primary btn-sm">Take Photo</button>
+              <button id="switchCameraBtn" type="button" class="btn btn-outline-secondary btn-sm">Switch Camera</button>
+            </div>
+          </div>
+          <div class="form-text">JPG/PNG, max 10 MB. Leave empty to keep current photo. On mobile you can take a photo using your camera.</div>
+          <div class="mt-2">
+            <img id="photoPreview" src="" alt="Preview" style="max-height:120px; display:none; border-radius:6px;" />
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- KYC + Bank -->
+    <div class="col-xl-6">
+      <div class="form-card">
+        <div class="form-section-title"><i class="bi bi-shield-check me-2"></i>KYC Documents</div>
+
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label">Aadhar Number</label>
+            <input type="text" name="aadhar_number" class="form-control"
+                   maxlength="12" placeholder="12-digit Aadhar"
+                   value="{{ customer.get('aadhar_number', '') }}">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">PAN Number</label>
+            <input type="text" name="pan_number" class="form-control"
+                   maxlength="10" placeholder="ABCDE1234F"
+                   style="text-transform:uppercase"
+                   value="{{ customer.get('pan_number', '') }}">
+          </div>
+        </div>
+
+        <div class="mb-3 mt-3">
+          <label class="form-label">KYC Document Upload</label>
+          {% if customer.get('kyc_document_url') %}
+          <div class="mb-2">
+            <a href="{{ customer.get('kyc_document_url') }}" target="_blank" class="btn btn-sm btn-outline-info">
+              <i class="bi bi-file-earmark me-1"></i>View Current KYC
+            </a>
+            <div class="text-muted small mt-2">Replace by uploading a new document, or leave empty to keep current</div>
+          </div>
+          {% endif %}
+          <input type="file" name="kyc_document" class="form-control"
+                 accept=".pdf,.jpg,.jpeg,.png">
+          <div class="form-text">PDF or image, max 10 MB</div>
+        </div>
+
+        <div class="form-section-title"><i class="bi bi-bank me-2"></i>Bank Details</div>
+
+        <div class="mb-3">
+          <label class="form-label">Bank Name</label>
+          <input type="text" name="bank_name" class="form-control"
+                 placeholder="e.g. State Bank of India"
+                 value="{{ customer.get('bank_name', '') }}">
+        </div>
+
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label">Account Number</label>
+            <input type="text" name="bank_account_number" class="form-control"
+                   placeholder="Account number"
+                   value="{{ customer.get('bank_account_number', '') }}">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">IFSC Code</label>
+            <input type="text" name="bank_ifsc_code" class="form-control"
+                   placeholder="e.g. SBIN0001234"
+                   style="text-transform:uppercase"
+                   value="{{ customer.get('bank_ifsc_code', '') }}">
+          </div>
+        </div>
+
+        <div class="mb-3 mt-3">
+          <label class="form-label">Branch</label>
+          <input type="text" name="bank_branch" class="form-control"
+                 placeholder="Branch name / city"
+                 value="{{ customer.get('bank_branch', '') }}">
+        </div>
+      </div>
+    </div>
+
+  </div><!-- row -->
+
+  <div class="d-flex gap-3 mt-4">
+    <button type="submit" class="btn btn-primary px-5">
+      <i class="bi bi-check me-2"></i>Save Changes
+    </button>
+    <a href="{{ url_for('admin.customer_profile', customer_id=customer.id) }}" class="btn btn-outline-secondary">Cancel</a>
+  </div>
+</form>
+
+<!-- Camera modal for taking photo -->
+<div class="modal fade" id="cameraModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Take Photo</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body text-center">
+        <video id="cameraVideo" autoplay playsinline style="width:100%; height:auto; background:#000; border-radius:6px;"></video>
+        <canvas id="cameraCanvas" style="display:none;"></canvas>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button id="capturePhotoBtn" type="button" class="btn btn-primary">Capture</button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
