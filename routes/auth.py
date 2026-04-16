@@ -79,3 +79,32 @@ def logout():
     logout_user()
     flash("You have been logged out.", "info")
     return redirect(url_for("auth.login"))
+
+
+@auth_bp.route("/hooks/run_penalty", methods=["POST"])
+def run_penalty_hook():
+    """Token-protected hook for GitHub Actions / external schedulers.
+    Header: Authorization: Bearer <SCHEDULER_TOKEN>
+    """
+    import os
+    import logging
+    from services.penalty_service import run_daily_penalty_job
+
+    logger = logging.getLogger(__name__)
+    expected = os.environ.get("SCHEDULER_TOKEN")
+    provided = request.headers.get("Authorization") or request.headers.get("X-Scheduler-Token", "")
+    if not expected:
+        return {"error": "Scheduler token not configured on server."}, 403
+    if not provided:
+        return {"error": "Missing scheduler token."}, 403
+    if provided.startswith("Bearer "):
+        provided = provided.split(" ", 1)[1]
+    if provided != expected:
+        return {"error": "Invalid scheduler token."}, 403
+
+    try:
+        processed = run_daily_penalty_job()
+        return {"status": "ok", "processed": processed}, 200
+    except Exception as exc:
+        logger.exception("Error running penalty hook: %s", exc)
+        return {"status": "error", "message": str(exc)}, 500

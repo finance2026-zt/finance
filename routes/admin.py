@@ -691,31 +691,4 @@ def run_penalty_now():
     return redirect(url_for("admin.loans"))
 
 
-@admin_bp.route("/hooks/run_penalty", methods=["POST"])
-def run_penalty_hook():
-    """Token-protected hook for external schedulers (e.g. Vercel/GitHub Actions).
 
-    Expected header: `Authorization: Bearer <token>` or `X-Scheduler-Token: <token>`
-    The token must match the `SCHEDULER_TOKEN` environment variable.
-    """
-    import os
-    from services.penalty_service import run_daily_penalty_job
-
-    expected = os.environ.get("SCHEDULER_TOKEN")
-    provided = request.headers.get("Authorization") or request.headers.get("X-Scheduler-Token")
-    if not expected:
-        return ("Scheduler token not configured on server.", 403)
-    if not provided:
-        return ("Missing scheduler token.", 403)
-    # Support 'Bearer <token>' header
-    if provided.startswith("Bearer "):
-        provided = provided.split(" ", 1)[1]
-    if provided != expected:
-        return ("Invalid scheduler token.", 403)
-
-    try:
-        processed = run_daily_penalty_job()
-        return ({"status": "ok", "processed": processed}, 200)
-    except Exception as exc:
-        logger.exception("Error running penalty hook: %s", exc)
-        return ({"status": "error", "message": str(exc)}, 500)
