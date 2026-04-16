@@ -103,6 +103,40 @@ document.addEventListener('DOMContentLoaded', function () {
     bootstrap.Tooltip.getOrCreateInstance(el);
   });
 
+  // ── Global form submit → loading button ──────────────────────────────
+  //  On any <form> submit, the clicked submit button gets a spinner and is
+  //  disabled so the user cannot double-click.
+  //  Buttons with data-no-loading="true" are excluded.
+  document.querySelectorAll('form').forEach(function (form) {
+    // track which button triggered the submit
+    form.querySelectorAll('[type="submit"]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        form._submitBtn = btn;
+      });
+    });
+
+    form.addEventListener('submit', function () {
+      const btn = form._submitBtn ||
+                  form.querySelector('[type="submit"]');
+      if (!btn || btn.dataset.noLoading === 'true') return;
+
+      // Save original content and replace with spinner
+      const originalHTML = btn.innerHTML;
+      btn.innerHTML =
+        '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>' +
+        'Please wait…';
+      btn.disabled = true;
+      btn.classList.add('btn-loading');
+
+      // Safety fallback: re-enable after 15 s in case navigation stalls
+      setTimeout(function () {
+        btn.disabled = false;
+        btn.innerHTML = originalHTML;
+        btn.classList.remove('btn-loading');
+      }, 15000);
+    });
+  });
+
 });
 
 // ── Loan Calculation Preview ─────────────────────────────────────────────────

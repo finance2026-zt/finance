@@ -402,14 +402,76 @@ code { font-size: .82em; color: #15803d; }
 .bg-primary   { background-color: var(--primary) !important; }
 badge.bg-primary { background-color: var(--primary) !important; }
 
-/* ── Responsive table tweaks ─────────────────────────────────────────────── */
+/* ── Button loading state ────────────────────────────────────────────────── */
+.btn-loading {
+  opacity: .85;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* ── Responsive: tablet (768 – 991px) ───────────────────────────────────── */
+@media (max-width: 991.98px) {
+  .topbar { padding: 0 12px; }
+  .page-header { flex-wrap: wrap; gap: 10px; }
+  .stat-value  { font-size: 1.5rem; }
+  .table-responsive { font-size: .85rem; }
+}
+
+/* ── Responsive: mobile (< 576px) ───────────────────────────────────────── */
 @media (max-width: 575.98px) {
-  .table th, .table td { padding: 8px 10px; font-size: .8rem; }
-  .stat-value { font-size: 1.35rem; }
-  .page-content { padding-top: 16px; }
-  .page-header { flex-direction: column; align-items: flex-start; gap: 8px; }
-  .page-header .btn { width: 100%; }
+  /* Typography & spacing */
+  .table th, .table td { padding: 8px 10px; font-size: .78rem; }
+  .stat-value { font-size: 1.25rem; }
+  .stat-label { font-size: .72rem; }
+  .page-content { padding: 12px 10px 24px; }
+
+  /* Page header stacks vertically, buttons full-width */
+  .page-header { flex-direction: column; align-items: stretch; gap: 8px; }
+  .page-header .btn,
+  .page-header form { width: 100%; }
+  .page-header form .btn { width: 100%; }
+
+  /* Table card header */
   .table-card-header { flex-direction: column; align-items: flex-start; gap: 8px; }
+
+  /* Hide less important table columns on small screens */
+  .table .d-none-mobile { display: none !important; }
+
+  /* Stat cards: 2-column grid instead of scrolling row */
+  .stat-card { padding: 14px 12px; }
+
+  /* Form controls bigger tap targets */
+  .form-control, .form-select {
+    font-size: .9rem;
+    padding: .5rem .75rem;
+    min-height: 44px;
+  }
+  .btn { min-height: 44px; font-size: .9rem; }
+  .btn-sm { min-height: 36px; font-size: .8rem; }
+
+  /* Modal full-screen on mobile */
+  .modal-dialog { margin: .5rem; }
+  .modal-content { border-radius: 12px; }
+
+  /* Topbar: tighten */
+  .topbar-avatar { width: 30px !important; height: 30px !important; font-size: .75rem !important; }
+  .topbar-name { display: none; }
+
+  /* Badge pills not too wide */
+  .badge { font-size: .7rem; padding: 4px 8px; }
+
+  /* Nav pills wrap cleanly */
+  .nav-pills { gap: 4px !important; }
+  .nav-pills .nav-link { font-size: .78rem; padding: 5px 10px; }
+
+  /* Action buttons in table rows become icon-only */
+  .btn-icon-label .btn-label { display: none; }
+
+  /* Breadcrumb hide on very small */
+  .breadcrumb-area { display: none; }
+
+  /* Cards full-width */
+  .detail-card, .table-card { border-radius: 10px; }
 }
 
 /* ── Topbar green accent ─────────────────────────────────────────────────── */
