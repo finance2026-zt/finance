@@ -12,7 +12,7 @@ from flask import (
     render_template,
     request,
     url_for,
-    
+
 )
 from flask_login import current_user, login_required
 from werkzeug.utils import secure_filename
@@ -49,14 +49,45 @@ def _allowed_file(filename: str) -> bool:
 
 
 def _save_upload(file, prefix: str, upload_folder: str) -> str | None:
-    """Saves an uploaded file and returns its web path, or None."""
-    if file and file.filename and _allowed_file(file.filename):
-        ext = file.filename.rsplit(".", 1)[1].lower()
-        filename = secure_filename(f"{prefix}.{ext}")
-        save_path = os.path.join(upload_folder, filename)
-        file.save(save_path)
-        return f"/static/uploads/{filename}"
-    return None
+    """Saves an uploaded file and returns its web path, or None.
+
+    On Vercel (read-only filesystem) the file is uploaded to Supabase Storage
+    bucket 'uploads' and its public URL is returned instead.
+    Locally the file is saved to upload_folder on disk.
+    """
+    if not (file and file.filename and _allowed_file(file.filename)):
+        return None
+
+    ext = file.filename.rsplit(".", 1)[1].lower()
+    filename = secure_filename(f"{prefix}.{ext}")
+
+    if os.environ.get("VERCEL"):
+        # Vercel filesystem is read-only — stream to Supabase Storage instead
+        try:
+            mime_map = {
+                "jpg": "image/jpeg",
+                "jpeg": "image/jpeg",
+                "png": "image/png",
+                "gif": "image/gif",
+                "pdf": "application/pdf",
+            }
+            content_type = mime_map.get(ext, "application/octet-stream")
+            file_bytes = file.read()
+            admin = get_admin_client()
+            admin.storage.from_("uploads").upload(
+                path=filename,
+                file=file_bytes,
+                file_options={"content-type": content_type, "upsert": "true"},
+            )
+            return admin.storage.from_("uploads").get_public_url(filename)
+        except Exception as exc:
+            logger.warning("Supabase Storage upload failed: %s", exc)
+            return None
+
+    # Local dev: save to disk
+    save_path = os.path.join(upload_folder, filename)
+    file.save(save_path)
+    return f"/static/uploads/{filename}"
 
 
 # ── Helpers ─────────────────────────────────────────────────────────────────
@@ -209,7 +240,8 @@ def new_customer():
             "static",
             "uploads",
         )
-        os.makedirs(upload_folder, exist_ok=True)
+        if not os.environ.get("VERCEL"):
+            os.makedirs(upload_folder, exist_ok=True)
 
         # Auto-generate customer ID
         data["customer_id"] = generate_customer_id(supabase)
