@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Sign In — MicroFinance LMS</title>
+  <title>Sign In — SGA Finance</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet" />
   <style>
@@ -220,10 +220,9 @@
     }
     .mobile-header .mob-logo {
       width: 56px; height: 56px;
-      background: rgba(255,255,255,.15);
-      border-radius: 16px;
+      border-radius: 50%;
+      overflow: hidden;
       display: flex; align-items: center; justify-content: center;
-      font-size: 1.8rem;
       margin: 0 auto 12px;
     }
     @media (max-width: 767.98px) {
@@ -237,8 +236,11 @@
 
   <!-- ── Left panel (desktop) ── -->
   <div class="login-panel">
-    <div class="panel-logo"><i class="bi bi-bank2"></i></div>
-    <div class="panel-title">MicroFinance LMS</div>
+    <div class="panel-logo"><img src="{{ url_for('static', filename='img/guru.jpg') }}" alt="SGA" style="height:90px;width:90px;border-radius:50%;object-fit:cover;"></div>
+    <div class="panel-title" style="display:flex;align-items:center;justify-content:center;gap:10px;">
+      <img src="{{ url_for('static', filename='img/guru.jpg') }}" alt="SGA" style="height:40px;width:40px;border-radius:50%;object-fit:cover;">
+      SGA Finance
+    </div>
     <p class="panel-sub">A complete loan management platform for your microfinance operations.</p>
 
     <div class="panel-features">
@@ -267,8 +269,10 @@
 
       <!-- Mobile header (shown only on small screens) -->
       <div class="mobile-header">
-        <div class="mob-logo"><i class="bi bi-bank2"></i></div>
-        <div style="font-weight:800;font-size:1.25rem;">MicroFinance LMS</div>
+        <div class="mob-logo">
+          <img src="{{ url_for('static', filename='img/guru.jpg') }}" alt="SGA" style="height:56px;width:56px;border-radius:50%;object-fit:cover;">
+        </div>
+        <div style="font-weight:800;font-size:1.25rem;">SGA Finance</div>
         <div style="font-size:.85rem;opacity:.8;margin-top:4px;">Loan Management System</div>
       </div>
 
@@ -324,7 +328,7 @@
 
       <p class="security-note">
         <i class="bi bi-shield-lock me-1" style="color:#16a34a;"></i>
-        Secure access for authorised staff only &nbsp;·&nbsp; ZEONY MicroFinance
+        Secure access for authorised staff only &nbsp;·&nbsp; SGA Finance
       </p>
 
     </div><!-- .login-form-inner -->
