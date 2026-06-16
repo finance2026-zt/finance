@@ -131,7 +131,7 @@
               </td>
               <td><code class="small">{{ p.loans.loan_id if p.loans else '—' }}</code></td>
               <td class="amount-positive">₹{{ "{:,.2f}".format(p.amount_paid | float) }}</td>
-              <td class="text-muted small">{{ p.payment_date[:10] if p.payment_date else '—' }}</td>
+              <td class="text-muted small">{{ p.payment_date | ist_date }}</td>
             </tr>
             {% else %}
             <tr>

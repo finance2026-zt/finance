@@ -181,7 +181,7 @@
           <tbody>
             {% for p in payments %}
             <tr>
-              <td>{{ p.payment_date[:10] if p.payment_date else '—' }}</td>
+              <td>{{ p.payment_date | ist_date }}</td>
               <td class="amount-positive fw-semibold">₹{{ "{:,.2f}".format(p.amount_paid | float) }}</td>
               <td>₹{{ "{:,.2f}".format(p.balance_after | float) }}</td>
               <td>{{ p.users.name if p.users else '—' }}</td>
@@ -244,6 +244,13 @@
       });
     document.getElementById('paymentAmount').value = '';
     document.getElementById('paymentNotes').value  = '';
+
+    // Default payment date to today (IST), allow past dates but not future
+    const todayIST = new Date().toLocaleDateString('en-CA', {timeZone: 'Asia/Kolkata'});
+    const dateInput = document.getElementById('paymentDate');
+    dateInput.value = todayIST;
+    dateInput.max   = todayIST;
+
     new bootstrap.Modal(document.getElementById('paymentModal')).show();
   }
 </script>

@@ -46,6 +46,19 @@ def create_app():
         IST = pytz.timezone("Asia/Kolkata")
         return {"now": datetime.now(IST)}
 
+    @app.template_filter("ist_date")
+    def format_ist_date(date_str):
+        if not date_str:
+            return "—"
+        try:
+            from dateutil.parser import parse
+            dt = parse(date_str)
+            IST = pytz.timezone("Asia/Kolkata")
+            dt_ist = dt.astimezone(IST)
+            return dt_ist.strftime("%Y-%m-%d")
+        except Exception:
+            return date_str[:10]
+
     # ── Blueprints ──────────────────────────────────────────────────────────
     from routes.auth import auth_bp
     from routes.admin import admin_bp

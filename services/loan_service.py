@@ -93,6 +93,7 @@ def record_payment(
     amount_paid: float,
     collected_by: str,
     notes: str = "",
+    payment_date=None,        # date object or None (defaults to today IST)
 ) -> float:
     """
     Records a payment against a loan.
@@ -116,7 +117,13 @@ def record_payment(
     amount_paid = round(float(amount_paid), 2)
     balance_after = round(max(0.0, balance_before - amount_paid), 2)
 
-    ist_now = datetime.now(IST).isoformat()
+    # Build the payment timestamp
+    if payment_date is not None:
+        # Store as midnight IST on the chosen date
+        ist_midnight = IST.localize(datetime(payment_date.year, payment_date.month, payment_date.day, 0, 0, 0))
+        payment_ts = ist_midnight.isoformat()
+    else:
+        payment_ts = datetime.now(IST).isoformat()
 
     # Insert payment record
     supabase.table("payments").insert(
@@ -124,7 +131,7 @@ def record_payment(
             "loan_id": str(loan_id),
             "customer_id": str(customer_id),
             "amount_paid": amount_paid,
-            "payment_date": ist_now,
+            "payment_date": payment_ts,
             "collected_by": str(collected_by),
             "balance_before": balance_before,
             "balance_after": balance_after,

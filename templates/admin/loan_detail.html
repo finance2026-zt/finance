@@ -134,7 +134,7 @@
           <tbody>
             {% for p in payments %}
             <tr>
-              <td>{{ p.payment_date[:10] if p.payment_date else '—' }}</td>
+              <td>{{ p.payment_date | ist_date }}</td>
               <td class="amount-positive fw-semibold">₹{{ "{:,.2f}".format(p.amount_paid | float) }}</td>
               <td>₹{{ "{:,.2f}".format(p.balance_after | float) }}</td>
               <td>{{ p.users.name if p.users else '—' }}</td>

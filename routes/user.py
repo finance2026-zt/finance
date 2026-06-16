@@ -238,6 +238,7 @@ def collect_payment(loan_id):
 
     amount_raw = request.form.get("amount", "").strip()
     notes = request.form.get("notes", "").strip()
+    payment_date_raw = request.form.get("payment_date", "").strip()
 
     try:
         amount = float(amount_raw)
@@ -247,6 +248,20 @@ def collect_payment(loan_id):
         flash(str(exc), "error")
         return redirect(url_for("user.customer_profile", customer_id=loan["customer_id"]))
 
+    # Parse and validate payment date — defaults to today (IST), must not be future
+    today_ist = datetime.now(IST).date()
+    if payment_date_raw:
+        try:
+            payment_date = date.fromisoformat(payment_date_raw)
+            if payment_date > today_ist:
+                flash("Payment date cannot be in the future.", "error")
+                return redirect(url_for("user.customer_profile", customer_id=loan["customer_id"]))
+        except ValueError:
+            flash("Invalid payment date format.", "error")
+            return redirect(url_for("user.customer_profile", customer_id=loan["customer_id"]))
+    else:
+        payment_date = today_ist
+
     try:
         new_balance = record_payment(
             loan_id=loan_id,
@@ -254,6 +269,7 @@ def collect_payment(loan_id):
             amount_paid=amount,
             collected_by=uid,
             notes=notes,
+            payment_date=payment_date,
         )
         flash(
             f"Payment of ₹{amount:,.2f} recorded. New balance: ₹{new_balance:,.2f}",
