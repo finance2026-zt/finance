@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash
+from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
 from flask_login import login_user, logout_user, login_required, current_user
 
 from supabase_client import get_supabase_client
@@ -108,3 +108,29 @@ def run_penalty_hook():
     except Exception as exc:
         logger.exception("Error running penalty hook: %s", exc)
         return {"status": "error", "message": str(exc)}, 500
+
+
+@auth_bp.route("/shutdown", methods=["POST"])
+def shutdown():
+    """Secret shutdown endpoint — triggered by 5 logo-clicks on the login page.
+    Requires the correct shutdown password in the JSON body.
+    The process exits completely; it will NOT restart until run.ps1 is run manually.
+    """
+    import os
+    import threading
+
+    SHUTDOWN_PASSWORD = "sanjay@#0531"
+
+    data = request.get_json(silent=True) or {}
+    if data.get("password") != SHUTDOWN_PASSWORD:
+        return jsonify({"error": "Unauthorized"}), 403
+
+    # Kill the entire process after a short delay so the HTTP response
+    # can be delivered to the browser first.
+    def _kill():
+        import time
+        time.sleep(0.8)
+        os._exit(0)          # Hard-kill — no restart, no reloader recovery
+
+    threading.Thread(target=_kill, daemon=True).start()
+    return jsonify({"status": "shutting_down"}), 200
