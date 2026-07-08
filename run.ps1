@@ -1,2 +1,2 @@
 Set-Location $PSScriptRoot
-& ".\venv314\Scripts\python.exe" app.py
+& ".\venv314\Scripts\python.exe" launcher.py
