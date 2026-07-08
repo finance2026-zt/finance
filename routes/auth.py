@@ -117,16 +117,21 @@ def shutdown():
     """
     import os
 
-    SHUTDOWN_PASSWORD = "Sanjay@#0531"
-
     data = request.get_json(silent=True) or {}
-    if data.get("password") != SHUTDOWN_PASSWORD:
+    password_input = (data.get("password") or "").strip()
+
+    # Accept both case variants of the password
+    if password_input not in ("sanjay@#0531", "Sanjay@#0531"):
         return jsonify({"error": "Unauthorized"}), 403
 
     try:
-        # Write "stopped" to server_status.txt in the app folder
-        app_dir = os.path.dirname(os.path.dirname(__file__))
-        status_file = os.path.join(app_dir, "server_status.txt")
+        # Determine status file path based on environment
+        if os.environ.get("VERCEL") or os.environ.get("AWS_LAMBDA_FUNCTION_NAME"):
+            status_file = "/tmp/server_status.txt"
+        else:
+            app_dir = os.path.dirname(os.path.dirname(__file__))
+            status_file = os.path.join(app_dir, "server_status.txt")
+
         with open(status_file, "w") as f:
             f.write("stopped")
     except Exception as e:
