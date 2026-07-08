@@ -71,7 +71,11 @@ def create_app():
     app.register_blueprint(api_bp, url_prefix="/api")
 
     # ── Soft Shutdown/Maintenance state handling ────────────────────────────
-    STATUS_FILE = os.path.join(os.path.dirname(__file__), "server_status.txt")
+    # Vercel filesystem is read-only, so use /tmp/server_status.txt on Vercel
+    if os.environ.get("VERCEL") or os.environ.get("AWS_LAMBDA_FUNCTION_NAME"):
+        STATUS_FILE = "/tmp/server_status.txt"
+    else:
+        STATUS_FILE = os.path.join(os.path.dirname(__file__), "server_status.txt")
 
     def is_server_stopped():
         if os.path.exists(STATUS_FILE):
@@ -286,7 +290,9 @@ def create_app():
     @app.route("/start-server", methods=["POST"])
     def start_server():
         data = request.get_json(silent=True) or {}
-        if data.get("key") == "sanjay@#0531":
+        key_input = (data.get("key") or "").strip()
+        # Accept both case variants of the password
+        if key_input in ("sanjay@#0531", "Sanjay@#0531"):
             try:
                 with open(STATUS_FILE, "w") as f:
                     f.write("running")
