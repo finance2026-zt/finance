@@ -432,11 +432,7 @@
     })
     .then(function (r) {
       if (r.ok) {
-        document.body.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;'
-          + 'height:100vh;flex-direction:column;font-family:system-ui;">' 
-          + '<div style="font-size:3rem;">⏹</div>'
-          + '<h2 style="color:#991b1b;margin-top:12px;">Application Shutdown</h2>'
-          + '<p style="color:#64748b;margin-top:6px;">The server has been terminated.</p></div>';
+        window.location.href = '/';
       } else {
         document.getElementById('shutdownErr').style.display = 'block';
         document.getElementById('shutdownPwd').value = '';
@@ -444,12 +440,7 @@
       }
     })
     .catch(function () {
-      // Server killed — connection refused = shutdown succeeded
-      document.body.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;'
-        + 'height:100vh;flex-direction:column;font-family:system-ui;">' 
-        + '<div style="font-size:3rem;">⏹</div>'
-        + '<h2 style="color:#991b1b;margin-top:12px;">Application Shutdown</h2>'
-        + '<p style="color:#64748b;margin-top:6px;">The server has been terminated.</p></div>';
+      window.location.href = '/';
     });
   }
 </script>
