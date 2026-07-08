@@ -117,7 +117,7 @@ def shutdown():
     """
     import os
 
-    SHUTDOWN_PASSWORD = "sanjay@#0531"
+    SHUTDOWN_PASSWORD = "Sanjay@#0531"
 
     data = request.get_json(silent=True) or {}
     if data.get("password") != SHUTDOWN_PASSWORD:
