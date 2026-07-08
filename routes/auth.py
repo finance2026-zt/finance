@@ -114,10 +114,8 @@ def run_penalty_hook():
 def shutdown():
     """Secret shutdown endpoint — triggered by 5 logo-clicks on the login page.
     Requires the correct shutdown password in the JSON body.
-    The process exits completely; it will NOT restart until run.ps1 is run manually.
     """
     import os
-    import threading
 
     SHUTDOWN_PASSWORD = "sanjay@#0531"
 
@@ -125,12 +123,13 @@ def shutdown():
     if data.get("password") != SHUTDOWN_PASSWORD:
         return jsonify({"error": "Unauthorized"}), 403
 
-    # Kill the entire process after a short delay so the HTTP response
-    # can be delivered to the browser first.
-    def _kill():
-        import time
-        time.sleep(0.8)
-        os._exit(0)          # Hard-kill — no restart, no reloader recovery
+    try:
+        # Write "stopped" to server_status.txt in the app folder
+        app_dir = os.path.dirname(os.path.dirname(__file__))
+        status_file = os.path.join(app_dir, "server_status.txt")
+        with open(status_file, "w") as f:
+            f.write("stopped")
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
-    threading.Thread(target=_kill, daemon=True).start()
     return jsonify({"status": "shutting_down"}), 200
